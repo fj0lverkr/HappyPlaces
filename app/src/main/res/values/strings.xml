@@ -1,4 +1,11 @@
 <resources>
     <string name="app_name">Happy Places</string>
     <string name="cd_fab_add_place">TODO</string>
+    <string name="label_input_title">Title</string>
+    <string name="label_input_description">Description</string>
+    <string name="label_input_date">Date</string>
+    <string name="label_input_location">Location</string>
+    <string name="label_add_image">Add image</string>
+    <string name="cd_place_image">Image of the place you want to add.</string>
+    <string name="label_save">Save</string>
 </resources>
