@@ -10,4 +10,8 @@
     <string name="label_save">Save</string>
     <string name="error_required_field">Required field!</string>
     <string name="fmt_date">dd/MM/yyyy</string>
+    <string name="title_picture_dialog">Select Action</string>
+    <string name="lbl_add_from_gallery">Select from gallery</string>
+    <string name="lbl_add_from_camera">Capture with camera</string>
+    <string name="rationale_storage_camera">Permission to local storage and camera are needed to save pictures.</string>
 </resources>
