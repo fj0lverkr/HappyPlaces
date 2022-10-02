@@ -8,4 +8,6 @@
     <string name="label_add_image">Add image</string>
     <string name="cd_place_image">Image of the place you want to add.</string>
     <string name="label_save">Save</string>
+    <string name="error_required_field">Required field!</string>
+    <string name="fmt_date">dd/MM/yyyy</string>
 </resources>
