@@ -1,21 +1,56 @@
 package com.nilsnahooy.happyplaces
 
+import android.Manifest
+import android.R.attr.bitmap
+import android.app.Activity
+import android.app.AlertDialog
 import android.app.DatePickerDialog
-import androidx.appcompat.app.AppCompatActivity
+import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Bundle
+import android.provider.MediaStore
 import android.view.MenuItem
 import android.view.View
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.nilsnahooy.happyplaces.databinding.ActivityAddPlaceBinding
+import com.vmadalin.easypermissions.EasyPermissions
+import com.vmadalin.easypermissions.annotations.AfterPermissionGranted
 import java.text.SimpleDateFormat
 import java.util.*
 
+
 class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocusChangeListener {
+    companion object {
+        const val REQUEST_STORAGE_AND_CAMERA_PERMISSION = 1
+        const val FROM_CAMERA = 0
+        const val FROM_GALLERY = 1
+    }
     private var b: ActivityAddPlaceBinding? = null
     private var cal = Calendar.getInstance()
 
     private lateinit var dateSetListener: DatePickerDialog.OnDateSetListener
+
+    private var galleryResultLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()) {
+            result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data: Intent? = result.data
+            b?.ivImagePreview?.setImageURI(data?.data)
+        }
+    }
+
+    private var cameraResultLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()) {
+            result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data: Intent? = result.data
+           //todo https://developer.android.com/training/camera2/capture-sessions-requests
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,6 +72,7 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         b?.tilLocation?.markRequired()
 
         b?.etDate?.setOnClickListener(this)
+        b?.tvButtonAddImage?.setOnClickListener(this)
         b?.tilTitle?.editText?.onFocusChangeListener = this
         b?.tilLocation?.editText?.onFocusChangeListener = this
     }
@@ -71,14 +107,48 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         b?.etDate?.setText(sdf.format(cal.time).toString())
     }
 
+    @AfterPermissionGranted(REQUEST_STORAGE_AND_CAMERA_PERMISSION)
+    private fun setPhoto(src: Int){
+        if (EasyPermissions.hasPermissions(this, Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.CAMERA)){
+            val pickFromGallery = Intent(Intent.ACTION_PICK,
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+            val pickFromCamera = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+            when(src){
+                0 -> galleryResultLauncher.launch(pickFromGallery)
+                1 -> cameraResultLauncher.launch(pickFromCamera)
+            }
+        } else {
+            EasyPermissions.requestPermissions(
+                this,
+                getString(R.string.rationale_storage_camera),
+                REQUEST_STORAGE_AND_CAMERA_PERMISSION,
+                Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.CAMERA
+            )
+            setPhoto(src)
+        }
+    }
+
     override fun onClick(v: View?) {
         when(v?.id){
             R.id.et_date -> {
-                DatePickerDialog(this@AddPlaceActivity,
+                DatePickerDialog(this,
                     dateSetListener,
                     cal.get(Calendar.YEAR),
                     cal.get(Calendar.MONTH),
                     cal.get(Calendar.DAY_OF_MONTH)).show()
+            }
+            R.id.tv_button_add_image -> {
+                val pictureDialog = AlertDialog.Builder(this)
+                val pictureDialogItems = arrayOf(getString(R.string.lbl_add_from_gallery),
+                    getString(R.string.lbl_add_from_camera))
+                pictureDialog.setTitle(getString(R.string.title_picture_dialog))
+                pictureDialog.setItems(pictureDialogItems){
+                    dialog, which ->
+                    setPhoto(which)
+                    dialog.dismiss()
+                }
+                pictureDialog.show()
             }
         }
     }
@@ -87,6 +157,15 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         if(!hasFocus){
             validateInput(v)
         }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>,
+                                            grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        // EasyPermissions handles the request result.
+        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults,
+            this)
     }
 
     override fun onDestroy() {
