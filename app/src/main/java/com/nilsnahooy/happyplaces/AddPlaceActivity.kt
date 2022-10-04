@@ -1,13 +1,11 @@
 package com.nilsnahooy.happyplaces
 
 import android.Manifest
-import android.R.attr.bitmap
 import android.app.Activity
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.MenuItem
@@ -19,6 +17,7 @@ import com.google.android.material.textfield.TextInputLayout
 import com.nilsnahooy.happyplaces.databinding.ActivityAddPlaceBinding
 import com.vmadalin.easypermissions.EasyPermissions
 import com.vmadalin.easypermissions.annotations.AfterPermissionGranted
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -26,8 +25,6 @@ import java.util.*
 class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocusChangeListener {
     companion object {
         const val REQUEST_STORAGE_AND_CAMERA_PERMISSION = 1
-        const val FROM_CAMERA = 0
-        const val FROM_GALLERY = 1
     }
     private var b: ActivityAddPlaceBinding? = null
     private var cal = Calendar.getInstance()
@@ -38,8 +35,12 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         ActivityResultContracts.StartActivityForResult()) {
             result ->
         if (result.resultCode == Activity.RESULT_OK) {
-            val data: Intent? = result.data
-            b?.ivImagePreview?.setImageURI(data?.data)
+            try {
+                val data: Intent? = result.data
+                b?.ivImagePreview?.setImageURI(data?.data)
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
         }
     }
 
@@ -48,6 +49,7 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
             result ->
         if (result.resultCode == Activity.RESULT_OK) {
             val data: Intent? = result.data
+            val thumbnail: Bitmap = data?.extras?.get("data") as Bitmap
            //todo https://developer.android.com/training/camera2/capture-sessions-requests
         }
     }
