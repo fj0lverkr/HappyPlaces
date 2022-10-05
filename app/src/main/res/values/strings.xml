@@ -15,4 +15,5 @@
     <string name="lbl_add_from_camera">Capture with camera</string>
     <string name="rationale_storage_camera">Permission to local storage and camera are needed to save pictures.</string>
     <string name="take_photo">Take photo</string>
+    <string name="cd_picture_button">Icon of a camera</string>
 </resources>
