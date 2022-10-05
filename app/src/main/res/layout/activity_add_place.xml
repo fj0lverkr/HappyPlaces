@@ -89,4 +89,25 @@
         android:textAllCaps="true"
         android:textSize="@dimen/text_button_size"
         android:text="@string/label_save" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/cl_viewFinder_wrapper"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="invisible">
+        <androidx.camera.view.PreviewView
+            android:id="@+id/pv_viewfinder"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+        <Button
+            android:id="@+id/btn_take_picture"
+            android:layout_width="110dp"
+            android:layout_height="110dp"
+            android:layout_marginBottom="10dp"
+            android:elevation="2dp"
+            android:text="@string/take_photo"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

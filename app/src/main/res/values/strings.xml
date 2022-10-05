@@ -14,4 +14,5 @@
     <string name="lbl_add_from_gallery">Select from gallery</string>
     <string name="lbl_add_from_camera">Capture with camera</string>
     <string name="rationale_storage_camera">Permission to local storage and camera are needed to save pictures.</string>
+    <string name="take_photo">Take photo</string>
 </resources>

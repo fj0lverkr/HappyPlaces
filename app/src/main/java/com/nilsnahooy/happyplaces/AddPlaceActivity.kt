@@ -4,32 +4,56 @@ import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
 import android.app.DatePickerDialog
+import android.content.ContentValues
 import android.content.Intent
-import android.graphics.Bitmap
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageCapture
+import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.nilsnahooy.happyplaces.databinding.ActivityAddPlaceBinding
-import com.vmadalin.easypermissions.EasyPermissions
-import com.vmadalin.easypermissions.annotations.AfterPermissionGranted
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
-
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocusChangeListener {
     companion object {
-        const val REQUEST_STORAGE_AND_CAMERA_PERMISSION = 1
+        private const val TAG = "HappyPlacesApp"
+        private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
+        private const val REQUEST_CODE_PERMISSIONS = 10
+        private val REQUIRED_PERMISSIONS =
+            mutableListOf (
+                Manifest.permission.CAMERA,
+                Manifest.permission.READ_EXTERNAL_STORAGE
+            ).apply {
+                if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+                    add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                }
+            }.toTypedArray()
     }
+
     private var b: ActivityAddPlaceBinding? = null
     private var cal = Calendar.getInstance()
 
     private lateinit var dateSetListener: DatePickerDialog.OnDateSetListener
+
+    private var imageCapture: ImageCapture? = null
+    private lateinit var cameraExecutor: ExecutorService
 
     private var galleryResultLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()) {
@@ -41,16 +65,6 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
             } catch (e: IOException) {
                 e.printStackTrace()
             }
-        }
-    }
-
-    private var cameraResultLauncher = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()) {
-            result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val data: Intent? = result.data
-            val thumbnail: Bitmap = data?.extras?.get("data") as Bitmap
-           //todo https://developer.android.com/training/camera2/capture-sessions-requests
         }
     }
 
@@ -70,11 +84,14 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
             formatDateInField()
         }
 
+        cameraExecutor = Executors.newSingleThreadExecutor()
+
         b?.tilTitle?.markRequired()
         b?.tilLocation?.markRequired()
 
         b?.etDate?.setOnClickListener(this)
         b?.tvButtonAddImage?.setOnClickListener(this)
+        b?.btnTakePicture?.setOnClickListener{takePicture()}
         b?.tilTitle?.editText?.onFocusChangeListener = this
         b?.tilLocation?.editText?.onFocusChangeListener = this
     }
@@ -109,24 +126,77 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         b?.etDate?.setText(sdf.format(cal.time).toString())
     }
 
-    @AfterPermissionGranted(REQUEST_STORAGE_AND_CAMERA_PERMISSION)
+    private fun startCamera(){
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+
+        cameraProviderFuture.addListener({
+            // Used to bind the lifecycle of cameras to the lifecycle owner
+            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+
+            val preview = Preview.Builder().build().also {
+                    it.setSurfaceProvider(b?.pvViewfinder?.surfaceProvider)
+                }
+
+            imageCapture = ImageCapture.Builder().build()
+
+            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+            try {
+                cameraProvider.unbindAll()
+                cameraProvider.bindToLifecycle(
+                    this, cameraSelector, preview, imageCapture)
+            } catch(exc: Exception) {
+                Log.e(TAG, "Use case binding failed", exc)
+            }
+        }, ContextCompat.getMainExecutor(this))
+
+        b?.clViewFinderWrapper?.visibility = View.VISIBLE
+    }
+
+    private fun takePicture(){
+        // Get a stable reference of the modifiable image capture use case
+        val imageCapture = imageCapture ?: return
+
+        val name = SimpleDateFormat(FILENAME_FORMAT, Locale.US).format(System.currentTimeMillis())
+        val contentValues = ContentValues().apply {
+            put(MediaStore.MediaColumns.DISPLAY_NAME, name)
+            put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
+            if(Build.VERSION.SDK_INT > Build.VERSION_CODES.P) {
+                put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/HappyPlaces")
+            }
+        }
+
+        val outputOptions = ImageCapture.OutputFileOptions
+            .Builder(contentResolver,
+                MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                contentValues)
+            .build()
+
+        imageCapture.takePicture(outputOptions, ContextCompat.getMainExecutor(this),
+            object : ImageCapture.OnImageSavedCallback {
+                override fun onError(exc: ImageCaptureException) {
+                    Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
+                }
+
+                override fun onImageSaved(output: ImageCapture.OutputFileResults){
+                    b?.ivImagePreview?.setImageURI(output.savedUri)
+                    b?.clViewFinderWrapper?.visibility = View.INVISIBLE
+                }
+            }
+        )
+    }
+
     private fun setPhoto(src: Int){
-        if (EasyPermissions.hasPermissions(this, Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.CAMERA)){
+        if (allPermissionsGranted()){
             val pickFromGallery = Intent(Intent.ACTION_PICK,
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-            val pickFromCamera = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
             when(src){
                 0 -> galleryResultLauncher.launch(pickFromGallery)
-                1 -> cameraResultLauncher.launch(pickFromCamera)
+                1 -> startCamera()
             }
         } else {
-            EasyPermissions.requestPermissions(
-                this,
-                getString(R.string.rationale_storage_camera),
-                REQUEST_STORAGE_AND_CAMERA_PERMISSION,
-                Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.CAMERA
-            )
+            ActivityCompat.requestPermissions(
+                this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
             setPhoto(src)
         }
     }
@@ -161,18 +231,14 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>,
-                                            grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-
-        // EasyPermissions handles the request result.
-        EasyPermissions.onRequestPermissionsResult(requestCode, permissions, grantResults,
-            this)
+    private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
+        ContextCompat.checkSelfPermission(
+            baseContext, it) == PackageManager.PERMISSION_GRANTED
     }
 
     override fun onDestroy() {
         super.onDestroy()
-
+        cameraExecutor.shutdown()
         b = null
     }
 }
