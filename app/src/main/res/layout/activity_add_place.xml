@@ -13,6 +13,7 @@
         app:layout_constraintTop_toTopOf="parent"
         android:hint="@string/label_input_title">
         <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/et_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             />
@@ -25,6 +26,7 @@
         app:layout_constraintTop_toBottomOf="@id/til_title"
         android:hint="@string/label_input_description">
         <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/et_description"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             />
@@ -52,6 +54,7 @@
         app:layout_constraintTop_toBottomOf="@id/til_date"
         android:hint="@string/label_input_location">
         <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/et_location"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             />
@@ -94,8 +97,7 @@
         android:id="@+id/cl_viewFinder_wrapper"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="invisible"
-        tools:visibility="visible">
+        android:visibility="gone">
         <androidx.camera.view.PreviewView
             android:id="@+id/pv_viewfinder"
             android:layout_width="match_parent"

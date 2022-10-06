@@ -6,12 +6,12 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "happyPlaces")
 data class HappyPlaceModel (
     @PrimaryKey(autoGenerate = true)
-    val id: Int,
-    val title: String,
-    val imageUri: String,
-    val description: String,
-    val date: String,
-    val location: String,
-    val latitude: Double,
-    val longitude: Double
+    val id: Int = 0,
+    var title: String = "",
+    var imageUri: String = "",
+    var description: String = "",
+    var date: String = "",
+    var location: String = "",
+    var latitude: Double = 0.0,
+    var longitude: Double = 0.0
     )

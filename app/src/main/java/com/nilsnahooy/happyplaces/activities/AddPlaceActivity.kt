@@ -24,8 +24,13 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import com.nilsnahooy.happyplaces.HappyPlaceApp
 import com.nilsnahooy.happyplaces.R
+import com.nilsnahooy.happyplaces.database.HappyPlaceDao
+import androidx.lifecycle.lifecycleScope
 import com.nilsnahooy.happyplaces.databinding.ActivityAddPlaceBinding
+import com.nilsnahooy.happyplaces.models.HappyPlaceModel
+import kotlinx.coroutines.launch
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
@@ -50,11 +55,13 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
 
     private var b: ActivityAddPlaceBinding? = null
     private var cal = Calendar.getInstance()
+    private var imageUri = ""
 
     private lateinit var dateSetListener: DatePickerDialog.OnDateSetListener
 
     private var imageCapture: ImageCapture? = null
     private lateinit var cameraExecutor: ExecutorService
+    private lateinit var dao: HappyPlaceDao
 
     private var galleryResultLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()) {
@@ -62,6 +69,7 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         if (result.resultCode == Activity.RESULT_OK) {
             try {
                 val data: Intent? = result.data
+                imageUri = data?.data.toString()
                 b?.ivImagePreview?.setImageURI(data?.data)
             } catch (e: IOException) {
                 e.printStackTrace()
@@ -92,9 +100,11 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
 
         b?.etDate?.setOnClickListener(this)
         b?.tvButtonAddImage?.setOnClickListener(this)
+        b?.btnSave?.setOnClickListener(this)
         b?.btnTakePicture?.setOnClickListener{takePicture()}
         b?.tilTitle?.editText?.onFocusChangeListener = this
         b?.tilLocation?.editText?.onFocusChangeListener = this
+        dao = (application as HappyPlaceApp).db.happyPlaceDao()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -181,6 +191,7 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
 
                 override fun onImageSaved(output: ImageCapture.OutputFileResults){
                     b?.ivImagePreview?.setImageURI(output.savedUri)
+                    imageUri = output.savedUri.toString()
                     b?.clViewFinderWrapper?.visibility = View.INVISIBLE
                 }
             }
@@ -223,6 +234,17 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
                     dialog.dismiss()
                 }
                 pictureDialog.show()
+            }
+            R.id.btn_save -> {
+                val hp =  HappyPlaceModel(title = b?.etTitle?.text.toString())
+                val mainIntent = Intent(this, MainActivity::class.java)
+                hp.description = b?.etDescription?.text.toString()
+                hp.date = b?.etDate?.text.toString()
+                hp.imageUri = imageUri
+                lifecycleScope.launch {
+                    dao.insertHappyPlace(hp)
+                }
+                startActivity(mainIntent)
             }
         }
     }
