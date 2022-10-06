@@ -1,4 +1,4 @@
-package com.nilsnahooy.happyplaces
+package com.nilsnahooy.happyplaces.activities
 
 import android.Manifest
 import android.app.Activity
@@ -24,6 +24,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
+import com.nilsnahooy.happyplaces.R
 import com.nilsnahooy.happyplaces.databinding.ActivityAddPlaceBinding
 import java.io.IOException
 import java.text.SimpleDateFormat
@@ -196,7 +197,8 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
             }
         } else {
             ActivityCompat.requestPermissions(
-                this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
+                this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
+            )
             setPhoto(src)
         }
     }

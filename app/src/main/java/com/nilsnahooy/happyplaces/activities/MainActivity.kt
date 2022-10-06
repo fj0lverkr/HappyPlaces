@@ -1,9 +1,8 @@
-package com.nilsnahooy.happyplaces
+package com.nilsnahooy.happyplaces.activities
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import com.nilsnahooy.happyplaces.databinding.ActivityAddPlaceBinding
 import com.nilsnahooy.happyplaces.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
