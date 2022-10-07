@@ -16,4 +16,10 @@
     <string name="rationale_storage_camera">Permission to local storage and camera are needed to save pictures.</string>
     <string name="take_photo">Take photo</string>
     <string name="cd_picture_button">Icon of a camera</string>
+    <string name="title_places">Happy Places</string>
+    <string name="lbl_no_items_places">No Happy Places in database</string>
+    <string name="title_delete_record">Delete Record?</string>
+    <string name="lbl_yes">yes</string>
+    <string name="toast_delete_confirmed">Place deleted</string>
+    <string name="lbl_no">no</string>
 </resources>

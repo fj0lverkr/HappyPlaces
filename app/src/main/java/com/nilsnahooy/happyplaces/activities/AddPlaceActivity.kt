@@ -5,8 +5,13 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.app.DatePickerDialog
 import android.content.ContentValues
+import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.ImageDecoder
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
@@ -31,7 +36,10 @@ import androidx.lifecycle.lifecycleScope
 import com.nilsnahooy.happyplaces.databinding.ActivityAddPlaceBinding
 import com.nilsnahooy.happyplaces.models.HappyPlaceModel
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
+import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.ExecutorService
@@ -42,6 +50,7 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         private const val TAG = "HappyPlacesApp"
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private const val REQUEST_CODE_PERMISSIONS = 10
+        private const val IMAGE_DIRECTORY = "HappyPlacesImages"
         private val REQUIRED_PERMISSIONS =
             mutableListOf (
                 Manifest.permission.CAMERA,
@@ -236,17 +245,46 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
                 pictureDialog.show()
             }
             R.id.btn_save -> {
+
+                /*
+                * TODO validations of fields prior to saving, check if an image was selected
+                *  set the date to default to today
+                * revamp the items in the recyclerview, image slightly bigger button smaller
+                * text bigger, and provide space for more fields.
+                */
+
                 val hp =  HappyPlaceModel(title = b?.etTitle?.text.toString())
                 val mainIntent = Intent(this, MainActivity::class.java)
+                val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    ImageDecoder.decodeBitmap(ImageDecoder.createSource(contentResolver, Uri.parse(imageUri)))
+                } else {
+                    MediaStore.Images.Media.getBitmap(contentResolver, Uri.parse(imageUri))
+                }
                 hp.description = b?.etDescription?.text.toString()
                 hp.date = b?.etDate?.text.toString()
-                hp.imageUri = imageUri
+                hp.imageUri = saveImageToLocalStorage(bitmap).toString()
                 lifecycleScope.launch {
                     dao.insertHappyPlace(hp)
                 }
                 startActivity(mainIntent)
             }
         }
+    }
+
+    private fun saveImageToLocalStorage(bitmap: Bitmap): Uri {
+        val wrapper = ContextWrapper(applicationContext)
+        var file = wrapper.getDir(IMAGE_DIRECTORY, Context.MODE_PRIVATE)
+        file = File(file, "${UUID.randomUUID()}.jpg")
+         try {
+             val stream: OutputStream = FileOutputStream(file)
+             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream)
+             stream.flush()
+             stream.close()
+
+         }catch (e: IOException){
+             e.printStackTrace()
+         }
+        return Uri.parse(file.absolutePath)
     }
 
     override fun onFocusChange(v: View?, hasFocus: Boolean) {

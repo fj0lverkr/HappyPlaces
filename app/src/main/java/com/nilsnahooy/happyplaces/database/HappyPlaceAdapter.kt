@@ -1,5 +1,6 @@
 package com.nilsnahooy.happyplaces.database
 
+import android.net.Uri
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.net.toUri
@@ -37,7 +38,7 @@ class HappyPlaceAdapter(private val placesList: ArrayList<HappyPlaceModel>,
             }
         )
 
-        holder.civImage.setImageURI(item.imageUri.toUri())
+        holder.civImage.setImageURI(Uri.parse(item.imageUri))
         holder.tvTitle.text = item.title
         holder.tvDescription.text = item.description
 

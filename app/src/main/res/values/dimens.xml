@@ -3,4 +3,7 @@
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="margin_base">10dp</dimen>
     <dimen name="text_button_size">22sp</dimen>
+    <dimen name="padding_global">10dp</dimen>
+    <dimen name="text_title">22sp</dimen>
+    <dimen name="size_button_text">16sp</dimen>
 </resources>
