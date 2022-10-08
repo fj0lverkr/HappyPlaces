@@ -6,4 +6,6 @@
     <dimen name="padding_global">10dp</dimen>
     <dimen name="text_title">22sp</dimen>
     <dimen name="size_button_text">16sp</dimen>
+    <dimen name="item_place_image">75dp</dimen>
+    <dimen name="item_place_button">35dp</dimen>
 </resources>

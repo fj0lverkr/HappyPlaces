@@ -7,8 +7,8 @@
     android:layout_height="wrap_content">
     <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/civ_place_image"
-        android:layout_width="55dp"
-        android:layout_height="55dp"
+        android:layout_width="@dimen/item_place_image"
+        android:layout_height="@dimen/item_place_image"
         tools:src="@drawable/ic_launcher_background"
         android:layout_margin="5dp"
         app:layout_constraintTop_toTopOf="parent"
@@ -22,7 +22,7 @@
         app:layout_constraintEnd_toStartOf="@id/btn_delete"
         app:layout_constraintTop_toTopOf="parent"
         android:textStyle="bold"
-        android:textSize="14sp"
+        android:textSize="20sp"
         android:layout_margin="5dp"
         tools:text="Dummy Title" />
     <TextView
@@ -32,15 +32,36 @@
         app:layout_constraintStart_toEndOf="@id/civ_place_image"
         app:layout_constraintEnd_toStartOf="@id/btn_delete"
         app:layout_constraintTop_toBottomOf="@id/tv_happy_place_title"
+        app:layout_constraintBottom_toTopOf="@id/tv_happy_place_date"
+        android:layout_margin="5dp"
+        android:textSize="16sp"
+        tools:text="Dummy description" />
+    <TextView
+        android:id="@+id/tv_happy_place_date"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toEndOf="@id/civ_place_image"
+        app:layout_constraintEnd_toStartOf="@id/tv_happy_place_location"
+        app:layout_constraintTop_toBottomOf="@id/tv_happy_place_description"
         app:layout_constraintBottom_toBottomOf="parent"
         android:layout_margin="5dp"
         android:textSize="14sp"
         tools:text="Dummy description" />
-
+    <TextView
+        android:id="@+id/tv_happy_place_location"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toEndOf="@id/tv_happy_place_date"
+        app:layout_constraintEnd_toStartOf="@id/btn_delete"
+        app:layout_constraintTop_toBottomOf="@id/tv_happy_place_description"
+        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_margin="5dp"
+        android:textSize="14sp"
+        tools:text="Dummy description" />
     <ImageButton
         android:id="@+id/btn_delete"
-        android:layout_width="55dp"
-        android:layout_height="55dp"
+        android:layout_width="@dimen/item_place_button"
+        android:layout_height="@dimen/item_place_button"
         android:layout_margin="5dp"
         android:elevation="10dp"
         android:src="@drawable/ic_baseline_delete_24"

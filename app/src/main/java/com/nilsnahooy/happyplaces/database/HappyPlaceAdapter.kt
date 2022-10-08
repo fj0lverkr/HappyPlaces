@@ -17,6 +17,8 @@ class HappyPlaceAdapter(private val placesList: ArrayList<HappyPlaceModel>,
             val civImage = b.civPlaceImage
             val tvTitle = b.tvHappyPlaceTitle
             val tvDescription = b.tvHappyPlaceDescription
+            val tvDate = b.tvHappyPlaceDate
+            val tvLocation = b.tvHappyPlaceLocation
             val btnDelete = b.btnDelete
         }
 
@@ -38,9 +40,29 @@ class HappyPlaceAdapter(private val placesList: ArrayList<HappyPlaceModel>,
             }
         )
 
+        val title = if (item.title.length >= 20) {
+            "${item.title.subSequence(0, 17)}..."
+        } else {
+            item.title
+        }
+
+        val desc = if (item.description.length >= 30) {
+            "${item.description.subSequence(0, 27)}..."
+        } else {
+            item.description
+        }
+
+        val loc = if (item.location.length >= 20) {
+            "${item.location.subSequence(0, 17)}..."
+        }else{
+            item.location
+        }
+
         holder.civImage.setImageURI(Uri.parse(item.imageUri))
-        holder.tvTitle.text = item.title
-        holder.tvDescription.text = item.description
+        holder.tvTitle.text = title
+        holder.tvDescription.text = desc
+        holder.tvDate.text = item.date
+        holder.tvLocation.text = loc
 
         holder.btnDelete.setOnClickListener{
             deleteListener.invoke(item.id)
