@@ -18,6 +18,7 @@ import android.provider.MediaStore
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
@@ -131,12 +132,14 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         hint = "$hint *"
     }
 
-    private fun validateInput(v: View?){
+    private fun validateInput(v: View?): Boolean{
         val view = v as TextInputEditText
-        if(view.text?.isEmpty() == true || view.text == null){
+        return if(view.text?.isEmpty() == true || view.text == null){
             view.error = getString(R.string.error_required_field)
+            false
         } else {
             view.error = null
+            true
         }
     }
 
@@ -144,6 +147,13 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         val myFormat = getString(R.string.fmt_date)
         val sdf = SimpleDateFormat(myFormat, Locale.getDefault())
         b?.etDate?.setText(sdf.format(cal.time).toString())
+    }
+
+    //overload of above
+    private fun formatDateInField(c:Calendar){
+        val myFormat = getString(R.string.fmt_date)
+        val sdf = SimpleDateFormat(myFormat, Locale.getDefault())
+        b?.etDate?.setText(sdf.format(c.time).toString())
     }
 
     private fun startCamera(){
@@ -244,30 +254,44 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
                 }
                 pictureDialog.show()
             }
-            R.id.btn_save -> {
+            R.id.btn_save -> saveHappyPlace()
+        }
+    }
 
-                /*
-                * TODO validations of fields prior to saving, check if an image was selected
-                *  set the date to default to today
-                * revamp the items in the recyclerview, image slightly bigger button smaller
-                * text bigger, and provide space for more fields.
-                */
-
-                val hp =  HappyPlaceModel(title = b?.etTitle?.text.toString())
-                val mainIntent = Intent(this, MainActivity::class.java)
-                val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                    ImageDecoder.decodeBitmap(ImageDecoder.createSource(contentResolver, Uri.parse(imageUri)))
-                } else {
-                    MediaStore.Images.Media.getBitmap(contentResolver, Uri.parse(imageUri))
-                }
-                hp.description = b?.etDescription?.text.toString()
-                hp.date = b?.etDate?.text.toString()
-                hp.imageUri = saveImageToLocalStorage(bitmap).toString()
-                lifecycleScope.launch {
-                    dao.insertHappyPlace(hp)
-                }
-                startActivity(mainIntent)
+    private fun saveHappyPlace(){
+        if(!validateInput(b?.etTitle)){
+            Toast.makeText(this, "Place requires a title.", Toast.LENGTH_LONG).show()
+        } else if(!validateInput(b?.etLocation)) {
+            Toast.makeText(this, "Place needs a location.", Toast.LENGTH_LONG).show()
+        } else {
+            val hp = HappyPlaceModel(title = b?.etTitle?.text.toString())
+            val mainIntent = Intent(this, MainActivity::class.java)
+            val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                ImageDecoder.decodeBitmap(
+                    ImageDecoder.createSource(
+                        contentResolver,
+                        Uri.parse(imageUri)
+                    )
+                )
+            } else {
+                MediaStore.Images.Media.getBitmap(contentResolver, Uri.parse(imageUri))
             }
+
+            //default date if none is chosen
+            if(b?.etDate?.text?.isEmpty() == true) {
+                val date = Calendar.getInstance()
+                formatDateInField(date)
+            }
+
+            hp.imageUri = saveImageToLocalStorage(bitmap).toString()
+            hp.description = b?.etDescription?.text.toString()
+            hp.date = b?.etDate?.text.toString()
+            hp.location = b?.etLocation?.text.toString()
+
+            lifecycleScope.launch {
+                dao.insertHappyPlace(hp)
+            }
+            startActivity(mainIntent)
         }
     }
 
