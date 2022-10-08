@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.Flow
 interface HappyPlaceDao {
     @Query("SELECT * FROM 'happyPlaces'")
     fun getAllHappyPlaces(): Flow<List<HappyPlaceModel>>
+    @Query("SELECT * FROM 'happyPlaces' WHERE id = :paramId")
+    fun getHappyPlaceById(paramId: Int): Flow<HappyPlaceModel>
     @Insert
     suspend fun insertHappyPlace(happyPlace: HappyPlaceModel)
     @Update

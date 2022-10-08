@@ -92,6 +92,7 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         b = ActivityAddPlaceBinding.inflate(layoutInflater)
         setContentView(b?.root)
 
+        //setup actionbar
         val actionBar = supportActionBar
         actionBar?.setDisplayHomeAsUpEnabled(true)
         
@@ -264,7 +265,6 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         } else if(!validateInput(b?.etLocation)) {
             Toast.makeText(this, "Place needs a location.", Toast.LENGTH_LONG).show()
         } else {
-            val hp = HappyPlaceModel(title = b?.etTitle?.text.toString())
             val mainIntent = Intent(this, MainActivity::class.java)
             val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 ImageDecoder.decodeBitmap(
@@ -282,11 +282,14 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
                 val date = Calendar.getInstance()
                 formatDateInField(date)
             }
-
-            hp.imageUri = saveImageToLocalStorage(bitmap).toString()
-            hp.description = b?.etDescription?.text.toString()
-            hp.date = b?.etDate?.text.toString()
-            hp.location = b?.etLocation?.text.toString()
+            val hp = HappyPlaceModel(
+                0,
+                b?.etTitle?.text.toString(),
+                saveImageToLocalStorage(bitmap).toString(),
+                b?.etDescription?.text.toString(),
+                b?.etDate?.text.toString(),
+                b?.etLocation?.text.toString()
+            )
 
             lifecycleScope.launch {
                 dao.insertHappyPlace(hp)

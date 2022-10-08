@@ -17,6 +17,10 @@ import com.nilsnahooy.happyplaces.models.HappyPlaceModel
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
+    companion object{
+        const val EXTRA_PLACE_DETAILS = "extra_place_details"
+    }
+
     private var b: ActivityMainBinding? = null
     private lateinit var dao: HappyPlaceDao
 
@@ -39,7 +43,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupData(places: ArrayList<HappyPlaceModel>){
         if (places.isNotEmpty()){
-            val adapter = HappyPlaceAdapter(places, ::showDeletePlaceDialog)
+            val adapter = HappyPlaceAdapter(places, ::showDeletePlaceDialog, ::goToItemDetail)
             b?.rvPlacesItems?.layoutManager = LinearLayoutManager(this)
             b?.rvPlacesItems?.adapter = adapter
             b?.rvPlacesItems?.visibility = View.VISIBLE
@@ -50,14 +54,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showDeletePlaceDialog(id: Int){
+    private fun showDeletePlaceDialog(place: HappyPlaceModel){
         val builder = AlertDialog.Builder(this)
         builder.setTitle(getString(R.string.title_delete_record))
         builder.setIcon(android.R.drawable.ic_dialog_alert)
         builder.setCancelable(false)
         builder.setPositiveButton(getString(R.string.lbl_yes)){ dialogInterface, _ ->
             lifecycleScope.launch {
-                dao.deleteHappyPlace(HappyPlaceModel(id))
+                dao.deleteHappyPlace(place)
                 Toast.makeText(applicationContext, getString(R.string.toast_delete_confirmed),
                     Toast.LENGTH_LONG).show()
             }
@@ -68,6 +72,16 @@ class MainActivity : AppCompatActivity() {
         }
         val alertDialog = builder.create()
         alertDialog.show()
+    }
+
+    private fun goToItemDetail(id: Int) {
+        val intent = Intent(this, ItemDetailActivity::class.java)
+        lifecycleScope.launch{
+            dao.getHappyPlaceById(id).collect{
+                intent.putExtra(EXTRA_PLACE_DETAILS, it)
+                startActivity(intent)
+            }
+        }
     }
 
     override fun onDestroy() {

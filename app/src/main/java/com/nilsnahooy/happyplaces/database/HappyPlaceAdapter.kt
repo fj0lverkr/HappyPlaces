@@ -3,14 +3,14 @@ package com.nilsnahooy.happyplaces.database
 import android.net.Uri
 import android.view.LayoutInflater
 import android.view.ViewGroup
-import androidx.core.net.toUri
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.color.MaterialColors
 import com.nilsnahooy.happyplaces.databinding.ItemHappyPlaceBinding
 import com.nilsnahooy.happyplaces.models.HappyPlaceModel
 
 class HappyPlaceAdapter(private val placesList: ArrayList<HappyPlaceModel>,
-                        private val deleteListener: (id:Int) -> Unit)
+                        private val deleteListener: (place: HappyPlaceModel) -> Unit,
+                        private val clickListener: (id: Int) -> Unit)
     : RecyclerView.Adapter<HappyPlaceAdapter.ViewHolder>(){
         inner class ViewHolder(b: ItemHappyPlaceBinding): RecyclerView.ViewHolder(b.root){
             val clItem = b.clItemHappyPlace
@@ -40,20 +40,20 @@ class HappyPlaceAdapter(private val placesList: ArrayList<HappyPlaceModel>,
             }
         )
 
-        val title = if (item.title.length >= 20) {
-            "${item.title.subSequence(0, 17)}..."
+        val title = if (item.title?.length!! >= 20) {
+            "${item.title?.subSequence(0, 17)}..."
         } else {
             item.title
         }
 
-        val desc = if (item.description.length >= 30) {
-            "${item.description.subSequence(0, 27)}..."
+        val desc = if (item.description?.length!! >= 30) {
+            "${item.description?.subSequence(0, 27)}..."
         } else {
             item.description
         }
 
-        val loc = if (item.location.length >= 20) {
-            "${item.location.subSequence(0, 17)}..."
+        val loc = if (item.location?.length!! >= 20) {
+            "${item.location?.subSequence(0, 17)}..."
         }else{
             item.location
         }
@@ -65,7 +65,11 @@ class HappyPlaceAdapter(private val placesList: ArrayList<HappyPlaceModel>,
         holder.tvLocation.text = loc
 
         holder.btnDelete.setOnClickListener{
-            deleteListener.invoke(item.id)
+            deleteListener.invoke(item)
+        }
+
+        holder.clItem.setOnClickListener {
+            clickListener.invoke(item.id)
         }
     }
 
