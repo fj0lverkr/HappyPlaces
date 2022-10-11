@@ -19,6 +19,7 @@ import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
+import androidx.activity.addCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
@@ -145,6 +146,15 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         b?.tilTitle?.editText?.onFocusChangeListener = this
         b?.tilLocation?.editText?.onFocusChangeListener = this
         dao = (application as HappyPlaceApp).db.happyPlaceDao()
+
+        //override back navigation as we do not want to have other actions
+        // open this Activity unwanted (which they did for some unknown reason...)
+        val callback = this.onBackPressedDispatcher.addCallback(this) {
+            intent = Intent(applicationContext, MainActivity::class.java)
+            startActivity(intent)
+            finish()
+        }
+        callback.isEnabled = true
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

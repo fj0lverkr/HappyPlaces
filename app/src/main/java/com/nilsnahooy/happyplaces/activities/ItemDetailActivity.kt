@@ -35,9 +35,9 @@ class ItemDetailActivity : AppCompatActivity() {
             b?.ivPlaceImage?.setImageURI(Uri.parse(place?.imageUri))
 
             //override back navigation as we do not want to have other actions
-            // open the detailActivity unwanted (which they did for some unknown reason...)
+            // open this Activity unwanted (which they did for some unknown reason...)
             val callback = this.onBackPressedDispatcher.addCallback(this) {
-                intent = Intent(this@ItemDetailActivity, MainActivity::class.java)
+                intent = Intent(applicationContext, MainActivity::class.java)
                 startActivity(intent)
                 finish()
             }
