@@ -1,10 +1,12 @@
 package com.nilsnahooy.happyplaces.activities
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.MenuItem
+import androidx.activity.addCallback
 import com.nilsnahooy.happyplaces.databinding.ActivityItemDetailBinding
 import com.nilsnahooy.happyplaces.models.HappyPlaceModel
 
@@ -24,11 +26,23 @@ class ItemDetailActivity : AppCompatActivity() {
                intent.getParcelableExtra(MainActivity.EXTRA_PLACE_DETAILS,
                HappyPlaceModel::class.java)
             }else {
+                //ignored since newer versions are handled above
+                @Suppress("DEPRECATION")
                 intent.getParcelableExtra(MainActivity.EXTRA_PLACE_DETAILS)
                         as HappyPlaceModel?
             }
             actionBar?.title = "${place?.title}"
             b?.ivPlaceImage?.setImageURI(Uri.parse(place?.imageUri))
+
+            //override back navigation as we do not want to have other actions
+            // open the detailActivity unwanted (which they did for some unknown reason...)
+            val callback = this.onBackPressedDispatcher.addCallback(this) {
+                intent = Intent(this@ItemDetailActivity, MainActivity::class.java)
+                startActivity(intent)
+                finish()
+            }
+            callback.isEnabled = true
+
         } else {
             finish()
         }
@@ -37,12 +51,15 @@ class ItemDetailActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when(item.itemId){
             android.R.id.home -> {
+                intent = Intent(this, MainActivity::class.java)
+                startActivity(intent)
                 finish()
                 true
             }
             else -> super.onOptionsItemSelected(item)
         }
     }
+
 
     override fun onDestroy() {
         super.onDestroy()

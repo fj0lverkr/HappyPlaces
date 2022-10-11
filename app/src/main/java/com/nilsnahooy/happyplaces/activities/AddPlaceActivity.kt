@@ -66,6 +66,9 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
     private var b: ActivityAddPlaceBinding? = null
     private var cal = Calendar.getInstance()
     private var imageUri = ""
+    private var mLatitude = 0.0
+    private var mLongitude = 0.0
+    private var mHappyPlaceDetails: HappyPlaceModel? = null
 
     private lateinit var dateSetListener: DatePickerDialog.OnDateSetListener
 
@@ -102,6 +105,32 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
             cal.set(Calendar.MONTH, month)
             cal.set(Calendar.DAY_OF_MONTH, dayOfMonth)
             formatDateInField()
+        }
+
+        if (intent.hasExtra(MainActivity.EXTRA_PLACE_DETAILS)) {
+            mHappyPlaceDetails = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                intent.getParcelableExtra(
+                    MainActivity.EXTRA_PLACE_DETAILS,
+                    HappyPlaceModel::class.java
+                )
+            }else{
+                //ignore deprecation message as we handle newer versions above.
+                @Suppress("DEPRECATION")
+                intent.getParcelableExtra(MainActivity.EXTRA_PLACE_DETAILS)
+            }
+        }
+
+        if (mHappyPlaceDetails != null){
+            actionBar?.title = "Edit Happy Place"
+            b?.etTitle?.setText(mHappyPlaceDetails!!.title)
+            b?.etDescription?.setText(mHappyPlaceDetails!!.description)
+            b?.etDate?.setText(mHappyPlaceDetails!!.date)
+            b?.etLocation?.setText(mHappyPlaceDetails!!.location)
+            mLatitude = mHappyPlaceDetails!!.latitude
+            mLongitude = mHappyPlaceDetails!!.longitude
+            imageUri = mHappyPlaceDetails!!.imageUri.toString()
+            b?.ivImagePreview?.setImageURI(Uri.parse(imageUri))
+            b?.btnSave?.text = getString(R.string.btn_update)
         }
 
         cameraExecutor = Executors.newSingleThreadExecutor()
@@ -260,41 +289,73 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
     }
 
     private fun saveHappyPlace(){
-        if(!validateInput(b?.etTitle)){
-            Toast.makeText(this, "Place requires a title.", Toast.LENGTH_LONG).show()
-        } else if(!validateInput(b?.etLocation)) {
-            Toast.makeText(this, "Place needs a location.", Toast.LENGTH_LONG).show()
-        } else {
-            val mainIntent = Intent(this, MainActivity::class.java)
-            val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                ImageDecoder.decodeBitmap(
-                    ImageDecoder.createSource(
-                        contentResolver,
-                        Uri.parse(imageUri)
-                    )
+        var bitmap: Bitmap? = null
+        when {
+            !validateInput(b?.etTitle) ->
+                Toast.makeText(this, "Place requires a title.", Toast.LENGTH_LONG)
+                    .show()
+            !validateInput(b?.etLocation) ->
+                Toast.makeText(this, "Place needs a location.", Toast.LENGTH_LONG)
+                    .show()
+            imageUri.isEmpty() ->
+                Toast.makeText(this, "Please provide a picture.", Toast.LENGTH_LONG)
+                    .show()
+            else -> {
+                val mainIntent = Intent(this, MainActivity::class.java)
+                if (imageUri != mHappyPlaceDetails?.imageUri) {
+                    bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        ImageDecoder.decodeBitmap(
+                            ImageDecoder.createSource(
+                                contentResolver,
+                                Uri.parse(imageUri)
+                            )
+                        )
+                    } else {
+                        //ignore deprecation message as we handle newer versions above.
+                        @Suppress("DEPRECATION")
+                        MediaStore.Images.Media.getBitmap(contentResolver, Uri.parse(imageUri))
+                    }
+                }
+
+                //default date if none is chosen
+                if (b?.etDate?.text?.isEmpty() == true) {
+                    val date = Calendar.getInstance()
+                    formatDateInField(date)
+                }
+
+                val savableImageUri = if (imageUri == mHappyPlaceDetails?.imageUri) {
+                    imageUri
+                } else {
+                    saveImageToLocalStorage(bitmap!!).toString()
+                }
+
+                val placeId = if (mHappyPlaceDetails != null){
+                    mHappyPlaceDetails?.id
+                } else {
+                    0
+                }
+
+                val hp = HappyPlaceModel(
+                    placeId!!,
+                    b?.etTitle?.text.toString(),
+                    savableImageUri,
+                    b?.etDescription?.text.toString(),
+                    b?.etDate?.text.toString(),
+                    b?.etLocation?.text.toString(),
+                    mLatitude,
+                    mLongitude
                 )
-            } else {
-                MediaStore.Images.Media.getBitmap(contentResolver, Uri.parse(imageUri))
-            }
 
-            //default date if none is chosen
-            if(b?.etDate?.text?.isEmpty() == true) {
-                val date = Calendar.getInstance()
-                formatDateInField(date)
+                lifecycleScope.launch {
+                    if (mHappyPlaceDetails == null) {
+                        dao.insertHappyPlace(hp)
+                    } else {
+                        dao.updateHappyPlace(hp)
+                    }
+                }
+                startActivity(mainIntent)
+                finish()
             }
-            val hp = HappyPlaceModel(
-                0,
-                b?.etTitle?.text.toString(),
-                saveImageToLocalStorage(bitmap).toString(),
-                b?.etDescription?.text.toString(),
-                b?.etDate?.text.toString(),
-                b?.etLocation?.text.toString()
-            )
-
-            lifecycleScope.launch {
-                dao.insertHappyPlace(hp)
-            }
-            startActivity(mainIntent)
         }
     }
 

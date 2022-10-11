@@ -1,16 +1,25 @@
 package com.nilsnahooy.happyplaces.database
 
+import android.app.Activity
+import android.content.Context
+import android.content.Intent
 import android.net.Uri
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.color.MaterialColors
+import com.nilsnahooy.happyplaces.HappyPlaceApp
+import com.nilsnahooy.happyplaces.activities.AddPlaceActivity
+import com.nilsnahooy.happyplaces.activities.MainActivity
 import com.nilsnahooy.happyplaces.databinding.ItemHappyPlaceBinding
 import com.nilsnahooy.happyplaces.models.HappyPlaceModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
-class HappyPlaceAdapter(private val placesList: ArrayList<HappyPlaceModel>,
-                        private val deleteListener: (place: HappyPlaceModel) -> Unit,
-                        private val clickListener: (id: Int) -> Unit)
+open class HappyPlaceAdapter(private val context: Context,
+                             private val placesList: ArrayList<HappyPlaceModel>,
+                             private val clickListener: (id: Int) -> Unit)
     : RecyclerView.Adapter<HappyPlaceAdapter.ViewHolder>(){
         inner class ViewHolder(b: ItemHappyPlaceBinding): RecyclerView.ViewHolder(b.root){
             val clItem = b.clItemHappyPlace
@@ -19,7 +28,6 @@ class HappyPlaceAdapter(private val placesList: ArrayList<HappyPlaceModel>,
             val tvDescription = b.tvHappyPlaceDescription
             val tvDate = b.tvHappyPlaceDate
             val tvLocation = b.tvHappyPlaceLocation
-            val btnDelete = b.btnDelete
         }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -64,16 +72,29 @@ class HappyPlaceAdapter(private val placesList: ArrayList<HappyPlaceModel>,
         holder.tvDate.text = item.date
         holder.tvLocation.text = loc
 
-        holder.btnDelete.setOnClickListener{
-            deleteListener.invoke(item)
-        }
-
         holder.clItem.setOnClickListener {
-            clickListener.invoke(item.id)
+           clickListener.invoke(item.id)
         }
     }
 
     override fun getItemCount(): Int {
         return placesList.size
+    }
+
+    fun notifyOnEdit(activity: Activity, position: Int, requestCode: Int){
+        val intent = Intent(context, AddPlaceActivity::class.java)
+        intent.putExtra(MainActivity.EXTRA_PLACE_DETAILS, placesList[position])
+        activity.startActivityForResult(intent, requestCode)
+        notifyItemChanged(position)
+    }
+
+    fun notifyOnDelete(position: Int){
+        val application = HappyPlaceApp()
+        val dao = application.db.happyPlaceDao()
+        CoroutineScope(Dispatchers.IO).launch {
+            dao.deleteHappyPlace(placesList[position])
+            placesList.removeAt(position)
+        }
+        notifyItemRemoved(position)
     }
 }

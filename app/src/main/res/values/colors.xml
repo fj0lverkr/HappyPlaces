@@ -59,4 +59,6 @@
     <color name="md_theme_dark_shadow">#000000</color>
     <color name="md_theme_dark_surfaceTint">#56DBC5</color>
     <color name="md_theme_dark_surfaceTintColor">#56DBC5</color>
+    <color name="swipe_edit_bg_color">#76FF03</color>
+    <color name="swipe_delete_bg_color">#F44336</color>
 </resources>

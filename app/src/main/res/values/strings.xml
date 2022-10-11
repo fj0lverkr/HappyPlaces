@@ -22,4 +22,5 @@
     <string name="lbl_yes">yes</string>
     <string name="toast_delete_confirmed">Place deleted</string>
     <string name="lbl_no">no</string>
+    <string name="btn_update">update</string>
 </resources>
