@@ -55,6 +55,8 @@
         android:hint="@string/label_input_location">
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/et_location"
+            android:focusable="false"
+            android:focusableInTouchMode="false"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             />

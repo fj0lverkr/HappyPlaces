@@ -35,6 +35,10 @@ import com.nilsnahooy.happyplaces.HappyPlaceApp
 import com.nilsnahooy.happyplaces.R
 import com.nilsnahooy.happyplaces.database.HappyPlaceDao
 import androidx.lifecycle.lifecycleScope
+import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.widget.Autocomplete
+import com.google.android.libraries.places.widget.model.AutocompleteActivityMode
 import com.nilsnahooy.happyplaces.databinding.ActivityAddPlaceBinding
 import com.nilsnahooy.happyplaces.models.HappyPlaceModel
 import kotlinx.coroutines.launch
@@ -53,6 +57,7 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private const val REQUEST_CODE_PERMISSIONS = 10
         private const val IMAGE_DIRECTORY = "HappyPlacesImages"
+        private const val PLACE_AUTOCOMPLETE_REQUEST_CODE = 3
         private val REQUIRED_PERMISSIONS =
             mutableListOf (
                 Manifest.permission.CAMERA,
@@ -88,6 +93,17 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
             } catch (e: IOException) {
                 e.printStackTrace()
             }
+        }
+    }
+
+    private var placeResultLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) {
+        result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val data = result.data
+            val place = Autocomplete.getPlaceFromIntent(data!!)
+            Toast.makeText(this, place.address, Toast.LENGTH_LONG).show()
         }
     }
 
@@ -143,6 +159,7 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         b?.tvButtonAddImage?.setOnClickListener(this)
         b?.btnSave?.setOnClickListener(this)
         b?.btnTakePicture?.setOnClickListener{takePicture()}
+        b?.etLocation?.setOnClickListener(this)
         b?.tilTitle?.editText?.onFocusChangeListener = this
         b?.tilLocation?.editText?.onFocusChangeListener = this
         dao = (application as HappyPlaceApp).db.happyPlaceDao()
@@ -155,6 +172,11 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
             finish()
         }
         callback.isEnabled = true
+
+        if(!Places.isInitialized()) {
+            Places.initialize(this@AddPlaceActivity,
+                getString(R.string.google_places_api_key))
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -295,6 +317,22 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
                 pictureDialog.show()
             }
             R.id.btn_save -> saveHappyPlace()
+            R.id.et_location -> {
+                try {
+                    val fields = listOf(
+                        Place.Field.ID,
+                        Place.Field.NAME,
+                        Place.Field.LAT_LNG,
+                        Place.Field.ADDRESS
+                    )
+                    val intent = Autocomplete
+                        .IntentBuilder(AutocompleteActivityMode.FULLSCREEN, fields)
+                        .build(this@AddPlaceActivity)
+                    placeResultLauncher.launch(intent)
+                }catch (e:Exception){
+                    e.printStackTrace()
+                }
+            }
         }
     }
 

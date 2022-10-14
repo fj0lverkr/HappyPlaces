@@ -2,6 +2,7 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
     id 'kotlin-kapt'
+    id 'com.google.android.libraries.mapsplatform.secrets-gradle-plugin'
 }
 
 android {
@@ -51,6 +52,9 @@ dependencies {
 
     //Kotlin extensions for coroutine support with activities
     implementation "androidx.activity:activity-ktx:$activity_version"
+
+    //Places API
+    implementation "com.google.android.libraries.places:places:2.6.0"
 
     implementation 'androidx.camera:camera-view:1.1.0'
     implementation "androidx.camera:camera-core:${camerax_version}"
