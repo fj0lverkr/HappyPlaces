@@ -57,7 +57,6 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private const val REQUEST_CODE_PERMISSIONS = 10
         private const val IMAGE_DIRECTORY = "HappyPlacesImages"
-        private const val PLACE_AUTOCOMPLETE_REQUEST_CODE = 3
         private val REQUIRED_PERMISSIONS =
             mutableListOf (
                 Manifest.permission.CAMERA,
@@ -103,7 +102,10 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         if (result.resultCode == Activity.RESULT_OK) {
             val data = result.data
             val place = Autocomplete.getPlaceFromIntent(data!!)
-            Toast.makeText(this, place.address, Toast.LENGTH_LONG).show()
+            b?.etLocation?.setText(place.address)
+            mLongitude = place.latLng!!.longitude
+            mLatitude = place.latLng!!.latitude
+
         }
     }
 
