@@ -14,6 +14,12 @@ class ItemDetailActivity : AppCompatActivity() {
 
     private var b: ActivityItemDetailBinding?  = null
 
+    companion object{
+        const val EXTRA_LATITUDE = "extra_latitude"
+        const val EXTRA_LONGITUDE = "extra_longitude"
+        const val EXTRA_TITLE = "extra_title"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         val place: HappyPlaceModel?
         super.onCreate(savedInstanceState)
@@ -31,8 +37,18 @@ class ItemDetailActivity : AppCompatActivity() {
                 intent.getParcelableExtra(MainActivity.EXTRA_PLACE_DETAILS)
                         as HappyPlaceModel?
             }
-            actionBar?.title = "${place?.title}"
+            actionBar?.title = place?.title
             b?.ivPlaceImage?.setImageURI(Uri.parse(place?.imageUri))
+            b?.tvHappyPlaceDescription?.text = place?.description
+            b?.tvPlaceDate?.text = place?.date
+            b?.tvHappyPlaceLocation?.text = place?.location
+            b?.btnMap?.setOnClickListener{
+                val intent = Intent(this, MapViewActivity::class.java)
+                    .putExtra(EXTRA_LONGITUDE,place?.longitude)
+                    .putExtra(EXTRA_LATITUDE, place?.latitude)
+                    .putExtra(EXTRA_TITLE, place?.title)
+                startActivity(intent)
+            }
 
             //override back navigation as we do not want to have other actions
             // open this Activity unwanted (which they did for some unknown reason...)

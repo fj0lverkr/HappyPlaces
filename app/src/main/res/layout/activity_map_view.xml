@@ -6,8 +6,8 @@
     tools:context=".activities.MapViewActivity">
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fgm_map"
-        class="com.google.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
+        android:layout_height="match_parent"
+        tools:context=".activities.MapViewActivity"
+        android:name="com.google.android.gms.maps.SupportMapFragment" />
 </androidx.constraintlayout.widget.ConstraintLayout>

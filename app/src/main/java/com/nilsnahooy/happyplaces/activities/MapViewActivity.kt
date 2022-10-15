@@ -1,14 +1,25 @@
 package com.nilsnahooy.happyplaces.activities
 
-import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import androidx.activity.addCallback
+import android.view.MenuItem
+import androidx.appcompat.app.AppCompatActivity
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 import com.nilsnahooy.happyplaces.databinding.ActivityMapViewBinding
 
-class MapViewActivity : AppCompatActivity() {
+
+class MapViewActivity : AppCompatActivity(), OnMapReadyCallback {
+
+    private lateinit var mMap: GoogleMap
 
     private var b:ActivityMapViewBinding? = null
+    private var mLat = 0.0
+    private var mLong = 0.0
+    private var mTitle = "Location"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -19,14 +30,37 @@ class MapViewActivity : AppCompatActivity() {
         val actionBar = supportActionBar
         actionBar?.setDisplayHomeAsUpEnabled(true)
 
-        //override back navigation as we do not want to have other actions
-        // open this Activity unwanted (which they did for some unknown reason...)
-        val callback = this.onBackPressedDispatcher.addCallback(this) {
-            intent = Intent(applicationContext, MainActivity::class.java)
-            startActivity(intent)
-            finish()
+        if (intent.hasExtra(ItemDetailActivity.EXTRA_LATITUDE)
+            && intent.hasExtra(ItemDetailActivity.EXTRA_LONGITUDE)
+            && intent.hasExtra(ItemDetailActivity.EXTRA_TITLE)) {
+            mLat = intent.getDoubleExtra(ItemDetailActivity.EXTRA_LATITUDE, mLat)
+            mLong = intent.getDoubleExtra(ItemDetailActivity.EXTRA_LONGITUDE, mLong)
+            mTitle = intent.getStringExtra(ItemDetailActivity.EXTRA_TITLE)!!
+            actionBar?.title = mTitle
         }
-        callback.isEnabled = true
+
+        //setup map
+        val mapFragment = supportFragmentManager.findFragmentById(b?.fgmMap?.id!!)
+                as SupportMapFragment?
+        mapFragment?.getMapAsync(this)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when(item.itemId){
+            android.R.id.home -> {
+                finish()
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
+    override fun onMapReady(p0: GoogleMap) {
+        mMap = p0
+        val place = LatLng(mLat, mLong)
+        mMap.addMarker(MarkerOptions().position(place).title(mTitle))
+        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(place, 15.0f))
+
     }
 
     override fun onDestroy() {
