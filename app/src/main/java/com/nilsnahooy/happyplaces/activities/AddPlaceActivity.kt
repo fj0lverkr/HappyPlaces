@@ -15,6 +15,7 @@ import android.location.LocationManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Looper
 import android.provider.MediaStore
 import android.provider.Settings
 import android.util.Log
@@ -37,6 +38,7 @@ import com.nilsnahooy.happyplaces.HappyPlaceApp
 import com.nilsnahooy.happyplaces.R
 import com.nilsnahooy.happyplaces.database.HappyPlaceDao
 import androidx.lifecycle.lifecycleScope
+import com.google.android.gms.location.*
 import com.google.android.libraries.places.api.Places
 import com.google.android.libraries.places.api.model.Place
 import com.google.android.libraries.places.widget.Autocomplete
@@ -116,6 +118,8 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         }
     }
 
+    private lateinit var mFusedLocationProviderClient : FusedLocationProviderClient
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         b = ActivityAddPlaceBinding.inflate(layoutInflater)
@@ -187,6 +191,8 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
             Places.initialize(this@AddPlaceActivity,
                 getString(R.string.GOOGLE_PLACES_API_KEY))
         }
+
+        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -356,14 +362,37 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         }
     }
 
+
+    @Suppress("DEPRECATION")
+    //locationRequest in use is deprecated but conflicts with newer implementation
     private fun setCurrentLocation(){
         if (permissionsGranted(REQUIRED_PERMISSIONS_LOCATION)){
-            Toast.makeText(this, "Location is allowed and enabled.", Toast.LENGTH_LONG)
-                .show()
+                val locationRequest = LocationRequest.create()
+                locationRequest.interval = 0
+                locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+                locationRequest.numUpdates = 1
+            try {
+                mFusedLocationProviderClient.requestLocationUpdates(locationRequest,
+                    locationCallback,
+                    Looper.myLooper())
+            } catch (e: SecurityException) {
+                e.printStackTrace()
+            }
         } else {
             ActivityCompat.requestPermissions(this,
                 REQUIRED_PERMISSIONS_LOCATION, REQUEST_CODE_PERMISSIONS)
             setCurrentLocation()
+        }
+    }
+
+    private val locationCallback = object : LocationCallback(){
+        override fun onLocationResult(locationResult: LocationResult) {
+            if (locationResult.locations.isNotEmpty()) {
+                val location = locationResult.lastLocation!!
+                mLatitude = location.latitude
+                mLongitude = location.longitude
+                b?.etLocation?.setText(location.toString())
+            }
         }
     }
 
