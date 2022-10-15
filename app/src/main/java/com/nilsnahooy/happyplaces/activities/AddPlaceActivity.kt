@@ -177,7 +177,7 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
 
         if(!Places.isInitialized()) {
             Places.initialize(this@AddPlaceActivity,
-                getString(R.string.google_places_api_key))
+                getString(R.string.GOOGLE_PLACES_API_KEY))
         }
     }
 

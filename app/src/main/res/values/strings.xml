@@ -23,5 +23,4 @@
     <string name="toast_delete_confirmed">Place deleted</string>
     <string name="lbl_no">no</string>
     <string name="btn_update">update</string>
-    <string name="google_places_api_key">AIzaSyCvdxgknU3BYZEkDjMkCuccj5F3-vj1pTo</string>
 </resources>
