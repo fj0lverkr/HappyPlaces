@@ -24,4 +24,5 @@
     <string name="lbl_no">no</string>
     <string name="btn_update">update</string>
     <string name="lbl_show_on_map">Show on map</string>
+    <string name="add_current_location">Add current location</string>
 </resources>

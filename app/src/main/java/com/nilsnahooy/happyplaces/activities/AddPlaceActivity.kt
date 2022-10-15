@@ -11,10 +11,12 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
+import android.location.LocationManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
+import android.provider.Settings
 import android.util.Log
 import android.view.MenuItem
 import android.view.View
@@ -57,7 +59,12 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private const val REQUEST_CODE_PERMISSIONS = 10
         private const val IMAGE_DIRECTORY = "HappyPlacesImages"
-        private val REQUIRED_PERMISSIONS =
+        private val REQUIRED_PERMISSIONS_LOCATION =
+            mutableListOf(
+                Manifest.permission.ACCESS_COARSE_LOCATION,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ).toTypedArray()
+        private val REQUIRED_PERMISSIONS_IMAGE =
             mutableListOf (
                 Manifest.permission.CAMERA,
                 Manifest.permission.READ_EXTERNAL_STORAGE
@@ -162,6 +169,7 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         b?.btnSave?.setOnClickListener(this)
         b?.btnTakePicture?.setOnClickListener{takePicture()}
         b?.etLocation?.setOnClickListener(this)
+        b?.btnAddCurrentLocation?.setOnClickListener(this)
         b?.tilTitle?.editText?.onFocusChangeListener = this
         b?.tilLocation?.editText?.onFocusChangeListener = this
         dao = (application as HappyPlaceApp).db.happyPlaceDao()
@@ -282,7 +290,7 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
     }
 
     private fun setPhoto(src: Int){
-        if (allPermissionsGranted()){
+        if (permissionsGranted(REQUIRED_PERMISSIONS_IMAGE)){
             val pickFromGallery = Intent(Intent.ACTION_PICK,
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
             when(src){
@@ -291,7 +299,7 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
             }
         } else {
             ActivityCompat.requestPermissions(
-                this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
+                this, REQUIRED_PERMISSIONS_IMAGE, REQUEST_CODE_PERMISSIONS
             )
             setPhoto(src)
         }
@@ -335,7 +343,35 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
                     e.printStackTrace()
                 }
             }
+            R.id.btn_add_current_location -> {
+                if (!isLocationEnabled()) {
+                    Toast.makeText(this, "Your location provider is turned off," +
+                            " please enable it.", Toast.LENGTH_LONG).show()
+                    val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                    startActivity(intent)
+                } else {
+                    setCurrentLocation()
+                }
+            }
         }
+    }
+
+    private fun setCurrentLocation(){
+        if (permissionsGranted(REQUIRED_PERMISSIONS_LOCATION)){
+            Toast.makeText(this, "Location is allowed and enabled.", Toast.LENGTH_LONG)
+                .show()
+        } else {
+            ActivityCompat.requestPermissions(this,
+                REQUIRED_PERMISSIONS_LOCATION, REQUEST_CODE_PERMISSIONS)
+            setCurrentLocation()
+        }
+    }
+
+    private fun isLocationEnabled(): Boolean {
+        val locationManager: LocationManager = getSystemService(Context.LOCATION_SERVICE)
+                as LocationManager
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
     }
 
     private fun saveHappyPlace(){
@@ -431,7 +467,7 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         }
     }
 
-    private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
+    private fun permissionsGranted(p: Array<String>) = p.all {
         ContextCompat.checkSelfPermission(
             baseContext, it) == PackageManager.PERMISSION_GRANTED
     }
