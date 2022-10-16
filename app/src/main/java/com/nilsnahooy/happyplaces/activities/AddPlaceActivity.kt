@@ -11,6 +11,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
+import android.location.Address
+import android.location.Geocoder
 import android.location.LocationManager
 import android.net.Uri
 import android.os.Build
@@ -52,8 +54,10 @@ import java.io.IOException
 import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.FutureTask
 
 class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocusChangeListener {
     companion object {
@@ -119,6 +123,7 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
     }
 
     private lateinit var mFusedLocationProviderClient : FusedLocationProviderClient
+    private lateinit var mAddressFromLatLngCallable: Callable<String>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -193,6 +198,39 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         }
 
         mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this)
+
+        mAddressFromLatLngCallable = Callable {
+            val geocoder = Geocoder(this, Locale.getDefault())
+            var addressList: List<Address>? = null
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    geocoder.getFromLocation(
+                        mLatitude, mLongitude, 1
+                    ) {
+                        addressList = it
+                    }
+                } else {
+                    @Suppress("DEPRECATION")
+                    // code for newer SDKs present above
+                    addressList = geocoder.getFromLocation(mLatitude, mLongitude, 1)
+                }
+
+                if (addressList != null && addressList!!.isNotEmpty()) {
+                    val address = addressList!![0]
+                    val sb = StringBuilder()
+                    for (i in 0..address.maxAddressLineIndex) {
+                        sb.append(address.getAddressLine(i)).append(" ")
+                    }
+                    sb.deleteCharAt(sb.length - 1)
+                    sb.toString()
+                } else {
+                    ""
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                "Error while resolving address from coordinates."
+            }
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -391,7 +429,9 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
                 val location = locationResult.lastLocation!!
                 mLatitude = location.latitude
                 mLongitude = location.longitude
-                b?.etLocation?.setText(location.toString())
+                val addressStringFutureTask = FutureTask(mAddressFromLatLngCallable)
+                addressStringFutureTask.run()
+                b?.etLocation?.setText(addressStringFutureTask.get())
             }
         }
     }
