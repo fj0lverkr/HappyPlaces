@@ -345,7 +345,6 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
             ActivityCompat.requestPermissions(
                 this, REQUIRED_PERMISSIONS_IMAGE, REQUEST_CODE_PERMISSIONS
             )
-            setPhoto(src)
         }
     }
 
@@ -419,7 +418,6 @@ class AddPlaceActivity : AppCompatActivity(), View.OnClickListener, View.OnFocus
         } else {
             ActivityCompat.requestPermissions(this,
                 REQUIRED_PERMISSIONS_LOCATION, REQUEST_CODE_PERMISSIONS)
-            setCurrentLocation()
         }
     }
 
